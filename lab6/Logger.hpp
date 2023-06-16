@@ -1,119 +1,96 @@
 #pragma once
+#include<iostream>
+#include<fstream>
+#include<chrono>
+#include<iomanip>
 
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <ctime>
-#include <cstdlib>
-#include <conio.h>
+static auto startt = std::chrono::steady_clock::now();
 
+namespace esp
+{
+	enum class LogLvl
+	{
+		DEBUG,
+		RELEASE
+	};
 
-namespace logger {
+	enum class LogType
+	{
+		DEBUG,
+		INFO,
+		ERROR
+	};
 
-    enum class Level {
-        DEBUG,
-        RELEASE,
-    };
+	class Log
+	{
+	private:
 
-    enum class Type {
-        ERROR,
-        DEBUG,
-        INFO
-    };
+		static std::ofstream m_out;
+		static LogLvl m_loglvl;
+		LogType m_lp;
 
-    class Logger {
-    private:
-        static std::ofstream outStream;
-        static Level level;
+	public:
 
+		explicit Log(LogType lp) : m_lp(lp)
+		{
+			std::cout << "\033[1;30m" << "Constructed" << "\033[0m" << std::endl;
+		}
 
-        Logger() = default;
+		static void SetLodLvl(LogLvl loglvl)
+		{
+			m_loglvl = loglvl;
+		}
 
-        ~Logger() { outStream.close(); };
+		static void SetLogPath(const std::string& path)
+		{
+			m_out.open(path);
+		}
 
-        static std::string generateMessage(const std::string& logMessage, const std::string& type) {
-            std::time_t timeNow = std::time(nullptr);
-            std::string result = type + ": " + logMessage + " | " + std::asctime(std::localtime(&timeNow));
-            return result;
-        }
+		static void Write(Log log, const std::string& msg)
+		{
+			if (m_loglvl == LogLvl::DEBUG)
+			{
+				auto endt = std::chrono::steady_clock::now();
+				std::chrono::duration<double> elapsed_seconds = endt - startt;
 
+				switch (log.m_lp)
+				{
+				case (LogType::INFO):
+				{
+					std::cerr << "\033[1;34m" << "[INFO]" << msg << " Duration: " << 1000 * elapsed_seconds.count() << " ms" << "\033[0m" << std::endl;
+					m_out << "[INFO]" << msg << " [INFO] " << "Duration: " << 1000 * elapsed_seconds.count() << " ms" << std::endl;
+					break;
+				}
+				case (LogType::DEBUG):
+				{
+					std::cerr << "\033[1;33m" << "[DEBUG]" << msg << " Duration: " << 1000 * elapsed_seconds.count() << " ms" << "\033[0m" << std::endl;
+					m_out << "[DEBUG]" << msg << " [DEBUG] " << "Duration: " << 1000 * elapsed_seconds.count() << " ms" << std::endl;
+					break;
+				}
+				case (LogType::ERROR):
+				{
+					std::cerr << "\033[1;31m" << "[ERROR]" << msg << " Duration: " << 1000 * elapsed_seconds.count() << " ms" << "\033[0m" << std::endl;
+					m_out << "[ERROR]" << msg << " [ERROR] " << "Duration: " << 1000 * elapsed_seconds.count() << " ms" << std::endl;
+					break;
+				}
+				}
 
-    public:
+			}
 
-        static void includeFile(const std::string& path = "log.txt") { outStream.open(path); }
+			auto endt = std::chrono::steady_clock::now();
+			std::chrono::duration<double> elapsed_seconds = endt - startt;
 
-        static void d(const std::string& logMessage) {
-            std::system("Color 0A");
-            if (level != Level::RELEASE)
-                std::cerr << generateMessage(logMessage, "DEBUG");
-            outStream << generateMessage(logMessage, "DEBUG");
-            outStream.flush();
+			if (m_loglvl == LogLvl::RELEASE)
+			{
+				m_out << msg << "Duration: " << 1000 * elapsed_seconds.count() << " ms" << std::endl;
+			}
 
-        }
+			m_out.flush();  
+		}
 
-        static void info(const std::string& logMessage) {
-            std::system("Color 06");
-            if (level != Level::RELEASE)
-                std::cerr << generateMessage(logMessage, "INFO");
-            outStream << generateMessage(logMessage, "INFO");
-            outStream.flush();
-        }
-
-        static void error(const std::string& logMessage) {
-            if (level != Level::RELEASE)
-                std::cerr << generateMessage(logMessage, "ERROR");
-            outStream << generateMessage(logMessage, "ERROR");
-            outStream.flush();
-        }
-    };
-
-
-    class CLog {
-    private:
-        std::stringstream outString;
-        logger::Type typeOfLogger;
-
-
-        template<typename T>
-        CLog& operator<<(T& t) {
-            outString << t;
-            return *this;
-        }
-
-
-    public:
-        explicit CLog(Type logType) : typeOfLogger(logType) {}
-
-        ~CLog() {
-            std::time_t timeNow = std::time(nullptr);
-            switch (typeOfLogger) {
-            case Type::DEBUG:
-                std::cerr << "DEBUG: " << outString.str() + " | " + std::asctime(std::localtime(&timeNow));
-            case Type::ERROR:
-                std::cerr << "ERROR: " << outString.str() + " | " + std::asctime(std::localtime(&timeNow));
-            case Type::INFO:
-                std::cerr << "INFO: " << outString.str() + " | " + std::asctime(std::localtime(&timeNow));
-            }
-        }
-
-
-        logger::CLog info()
-        {
-            return logger::CLog(logger::Type::INFO);
-        }
-
-        logger::CLog debug()
-        {
-            return logger::CLog(logger::Type::DEBUG);
-        }
-
-        logger::CLog error()
-        {
-            return logger::CLog(logger::Type::ERROR);
-        }
-    };
-
-
-
+		~Log()
+		{
+			std::cout << "\033[1;30m" << "Destructed" << "\033[0m" << std::endl;
+		}
+	};
 }
