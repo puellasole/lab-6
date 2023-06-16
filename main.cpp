@@ -1,12 +1,18 @@
-#include <iostream>
+#include<iostream>
+#include<fstream>
 #include "lab6/Logger.hpp"
+#include<chrono>
 
-int main() {
-    std::string PATH = "log.txt";
-    logger::Logger::includeFile(PATH);
-    logger::Logger::info("Working now");
-    logger::Logger::error("Exception");
+int main()
+{
+	esp::Log log1(esp::LogType::ERROR);
+	esp::Log log2(esp::LogType::INFO);
+	esp::Log log3(esp::LogType::DEBUG);
 
-    logger::Logger::d("start debugging");
-    return 0;
+	esp::Log::SetLogPath("log.txt");
+	esp::Log::SetLodLvl(esp::LogLvl::DEBUG);
+
+	esp::Log::Write(log1, "Hello, world");
+	esp::Log::Write(log2, "Other another");
+	esp::Log::Write(log3, "debUg");
 }
